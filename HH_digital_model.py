@@ -20,6 +20,59 @@ warnings.filterwarnings('ignore')
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
+# 强制启用滚动 - 解决 Chrome 滚动问题
+st.markdown("""
+<style>
+    /* 修复主容器滚动 */
+    .main > div {
+        overflow-y: auto !important;
+        height: 100vh !important;
+    }
+    
+    /* 修复 block 容器滚动 */
+    .block-container {
+        overflow-y: auto !important;
+        max-height: none !important;
+        padding-bottom: 2rem !important;
+    }
+    
+    /* 确保 body 可以滚动 */
+    body {
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+    
+    /* 修复 iframe 相关问题 */
+    iframe {
+        overflow: auto !important;
+    }
+    
+    /* 移除任何可能导致滚动失效的样式 */
+    .stApp {
+        overflow-y: auto !important;
+    }
+    
+    /* 确保滚动条可见 */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # 设置页面配置
 st.set_page_config(
     page_title="Digital Assembly Simulator",
