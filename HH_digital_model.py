@@ -30,10 +30,13 @@ import math
 import os
 from datetime import datetime
 
+import streamlit as st
+
+# ========== 滚动修复 - 强制覆盖 overscroll-behavior ==========
 st.markdown("""
 <style>
-    /* 修复滚动被禁用的问题 */
-    body, html {
+    /* 强制覆盖 body 的 overscroll-behavior */
+    body {
         overscroll-behavior: auto !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
@@ -41,30 +44,50 @@ st.markdown("""
         min-height: 100vh !important;
     }
     
+    /* 强制覆盖 html */
+    html {
+        overscroll-behavior: auto !important;
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+    
+    /* 强制覆盖 Streamlit 主容器 */
     .stApp {
+        overscroll-behavior: auto !important;
         overflow-y: auto !important;
         height: auto !important;
         min-height: 100vh !important;
     }
     
-    .main, .block-container {
-        overflow-y: visible !important;
-        max-height: none !important;
+    /* 确保内容容器可以滚动 */
+    .main {
+        overflow-y: auto !important;
     }
     
-    /* 可选：美化滚动条 */
+    .block-container {
+        overflow-y: auto !important;
+        max-height: none !important;
+        padding-bottom: 3rem !important;
+    }
+    
+    /* 显示滚动条 */
     ::-webkit-scrollbar {
-        width: 10px;
-        background: #f1f1f1;
+        width: 12px !important;
+        height: 12px !important;
+        display: block !important;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1 !important;
     }
     
     ::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 5px;
+        background: #888 !important;
+        border-radius: 6px !important;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: #555;
+        background: #555 !important;
     }
 </style>
 """, unsafe_allow_html=True)
