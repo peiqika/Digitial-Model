@@ -14,57 +14,53 @@ import math
 import os
 from datetime import datetime
 
-warnings.filterwarnings('ignore')
+import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+import joblib
+import warnings
+import time
+import pickle
+import json
+from io import BytesIO
+import math
+import os
+from datetime import datetime
 
-# 设置中文字体
-plt.rcParams['font.sans-serif'] = ['SimHei']
-plt.rcParams['axes.unicode_minus'] = False
-
-# 强制启用滚动 - 解决 Chrome 滚动问题
 st.markdown("""
 <style>
-    /* 修复主容器滚动 */
-    .main > div {
+    /* 修复滚动被禁用的问题 */
+    body, html {
+        overscroll-behavior: auto !important;
         overflow-y: auto !important;
-        height: 100vh !important;
-    }
-    
-    /* 修复 block 容器滚动 */
-    .block-container {
-        overflow-y: auto !important;
-        max-height: none !important;
-        padding-bottom: 2rem !important;
-    }
-    
-    /* 确保 body 可以滚动 */
-    body {
-        overflow-y: auto !important;
+        overflow-x: hidden !important;
         height: auto !important;
+        min-height: 100vh !important;
     }
     
-    /* 修复 iframe 相关问题 */
-    iframe {
-        overflow: auto !important;
-    }
-    
-    /* 移除任何可能导致滚动失效的样式 */
     .stApp {
         overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100vh !important;
     }
     
-    /* 确保滚动条可见 */
+    .main, .block-container {
+        overflow-y: visible !important;
+        max-height: none !important;
+    }
+    
+    /* 可选：美化滚动条 */
     ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
+        width: 10px;
         background: #f1f1f1;
     }
     
     ::-webkit-scrollbar-thumb {
         background: #888;
-        border-radius: 4px;
+        border-radius: 5px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
@@ -72,6 +68,12 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+warnings.filterwarnings('ignore')
+
+# 设置中文字体
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
 
 # 设置页面配置
 st.set_page_config(
