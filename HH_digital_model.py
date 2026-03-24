@@ -30,51 +30,67 @@ import math
 import os
 from datetime import datetime
 
-import streamlit as st
-
-# ========== 滚动修复 - 强制覆盖 overscroll-behavior ==========
+# ========== 强制修复滚动问题 ==========
 st.markdown("""
 <style>
-    /* 强制覆盖 body 的 overscroll-behavior */
-    body {
-        overscroll-behavior: auto !important;
+    /* 彻底解决滚动问题 */
+    
+    /* 1. 修复 html 和 body */
+    html, body {
         overflow-y: auto !important;
         overflow-x: hidden !important;
         height: auto !important;
         min-height: 100vh !important;
-    }
-    
-    /* 强制覆盖 html */
-    html {
         overscroll-behavior: auto !important;
-        overflow-y: auto !important;
-        height: auto !important;
+        position: relative !important;
     }
     
-    /* 强制覆盖 Streamlit 主容器 */
+    /* 2. 修复 Streamlit 主应用容器 */
     .stApp {
-        overscroll-behavior: auto !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        display: block !important;
+        position: relative !important;
+    }
+    
+    /* 3. 修复主视图容器 */
+    [data-testid="stAppViewContainer"] {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        position: relative !important;
+    }
+    
+    /* 4. 修复主内容区域 */
+    .main {
         overflow-y: auto !important;
         height: auto !important;
         min-height: 100vh !important;
     }
     
-    /* 确保内容容器可以滚动 */
-    .main {
-        overflow-y: auto !important;
-    }
-    
+    /* 5. 修复 block-container - 这是最关键的部分 */
     .block-container {
-        overflow-y: auto !important;
+        overflow-y: visible !important;
         max-height: none !important;
+        height: auto !important;
         padding-bottom: 3rem !important;
+        padding-top: 2rem !important;
     }
     
-    /* 显示滚动条 */
+    /* 6. 确保所有内容都能滚动 */
+    .element-container, .stMarkdown, .stButton {
+        overflow: visible !important;
+    }
+    
+    /* 7. 强制显示滚动条 */
     ::-webkit-scrollbar {
         width: 12px !important;
         height: 12px !important;
         display: block !important;
+        -webkit-appearance: auto !important;
     }
     
     ::-webkit-scrollbar-track {
@@ -88,6 +104,11 @@ st.markdown("""
     
     ::-webkit-scrollbar-thumb:hover {
         background: #555 !important;
+    }
+    
+    /* 8. Firefox 滚动条 */
+    * {
+        scrollbar-width: auto !important;
     }
 </style>
 """, unsafe_allow_html=True)
