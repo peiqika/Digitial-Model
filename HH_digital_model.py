@@ -14,22 +14,6 @@ import math
 import os
 from datetime import datetime
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy import stats
-import joblib
-import warnings
-import time
-import pickle
-import json
-from io import BytesIO
-import math
-import os
-from datetime import datetime
-
 # ========== 强制修复滚动问题 ==========
 st.markdown("""
 <style>
@@ -127,7 +111,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 自定义CSS样式 - 白色主题版 + 超大输入框 + 字体放大 + 间距优化 + 结果界面优化
+# 自定义CSS样式 - 白色主题版 + 字体放大 + 间距优化
 st.markdown("""
 <style>
     /* 全局白色背景 */
@@ -140,7 +124,7 @@ st.markdown("""
         background-color: #FFFFFF;
     }
 
-    /* 侧边栏背景 - 浅灰色 */
+    /* 侧边栏背景 */
     section[data-testid="stSidebar"] {
         background-color: #F5F5F5;
     }
@@ -148,199 +132,166 @@ st.markdown("""
     /* 主标题样式 - 白色主题 */
     .main-header {
         text-align: center;
-        color: #2E7D32;
+        color: #2F855A;
         padding: 15px 0;
         font-size: 2.2rem;
         font-weight: bold;
         margin-bottom: 10px;
-        text-shadow: 0 0 10px rgba(46, 125, 50, 0.2);
+        text-shadow: 0 0 10px rgba(47, 133, 90, 0.2);
     }
 
     /* 页面整体内边距调整：左右留白增加 */
     .block-container {
-        padding: 0.3rem 0.5rem !important;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
     }
 
     /* 副标题样式 - 白色主题 */
     .section-header {
-        color: #2E7D32;
-        border-bottom: 2px solid #2E7D32;
+        color: #2F855A;
+        border-bottom: 2px solid #2F855A;
         padding-bottom: 8px;
-        margin-top: 15px;
-        margin-bottom: 10px;
-        font-size: 29px !important;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        font-size: 1.3rem;
     }
 
-    /* 结果卡片样式 - 白色主题 + 深色文字 */
+    /* 结果卡片样式 - 白色主题 */
     .result-card {
         background-color: #F8F9FA;
         border-radius: 8px;
-        padding: 5px;
-        margin: 5px 0;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        border-left: 4px solid #2E7D32;
-        font-size: 30px !important;
-    }
-    
-    /* 修改metric值的大小和颜色 */
-    .result-card [data-testid="stMetricValue"] {
-    font-size: 30px !important;  /* 改为更大一些 */
-    color: #000000 !important;      /* 改为纯黑色 */
-    }
-    
-    /* 修改metric标签的大小和颜色 */
-    .result-card [data-testid="stMetricLabel"] {
-    font-size: 30px !important;   /* 调整标签大小 */
-    color: #000000 !important;
+        padding: 15px;
+        margin: 8px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #2F855A;
+        color: #333333;
     }
 
-    /* 结果卡片内普通文字为深色 */
-    .result-card p,
-    .result-card .stMarkdown,
-    .result-card strong {
-        color: #000000 !important;
-    }
-
-    /* Pass 样式 - 绿色文字 */
-    .result-card .pass {
-        color: #000000 !important;
+    /* Pass/Fail 样式 - 白色主题 */
+    .pass {
+        color: #2F855A;
         font-weight: bold;
-        font-size: 30px !important;
-        background: none !important;
-        padding: 0;
-        border: none;
+        font-size: 1.1rem;
+        background-color: #E8F5E9;
+        padding: 4px 12px;
+        border-radius: 15px;
         display: inline-block;
+        border: 1px solid #2F855A;
     }
 
-    /* Fail 样式 - 红色文字 */
-    .result-card .fail {
-        color: #000000 !important;
+    .fail {
+        color: #E53E3E;
         font-weight: bold;
-        font-size: 30px !important;
-        background: none !important;
-        padding: 0;
-        border: none;
+        font-size: 1.1rem;
+        background-color: #FFF5F5;
+        padding: 4px 12px;
+        border-radius: 15px;
         display: inline-block;
+        border: 1px solid #E53E3E;
     }
 
     /* 输入组样式 - 白色主题 */
     .input-group {
         background-color: #F8F9FA;
-        border: 1px solid #E0E0E0;
-        border-radius: 8px;
-        padding: 28px 28px 18px 28px;
-        margin: 2px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        color: #000000;
+        border: 1px solid #E2E8F0;
+        border-radius: 6px;
+        padding: 15px 15px 5px 15px;
+        margin: 6px 0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        color: #333333;
         height: 100%;
     }
 
     /* 列之间的间距：为每列添加左右内边距 */
     div[data-testid="column"] {
-        padding-left: 0.25rem !important;
-        padding-right: 0.25rem !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
     }
 
     /* 每个参数项容器增加底部间距 */
     .input-group .element-container {
-        margin-bottom: 14px !important;
+        margin-bottom: 20px !important;
     }
 
-    /* 参数名称标签 - 放大到28px */
+    /* 参数名称标签 - 放大到18px */
     .param-label {
-        font-weight: 800;
-        color: #000000;
-        margin-bottom: 5px;
+        font-weight: 600;
+        color: #333333;
+        margin-bottom: 4px;
         display: flex;
         align-items: center;
-        font-size: 28px !important;
-        line-height: 0.5;
+        font-size: 18px !important;
+        line-height: 1.4;
         word-break: break-word;
     }
 
-    /* 参数范围显示 - 放大到18px */
+    /* 参数范围显示 - 放大到16px */
     .range-display {
-        font-size: 22px !important;
-        color: #000000;
+        font-size: 1rem !important;
+        color: #718096;
         margin-top: 2px;
-        margin-bottom: 5px;
-        font-weight: 600;
+        margin-bottom: 8px;
     }
 
-    /* 输入框容器放大 */
-    .stNumberInput {
-        width: 100% !important;
-    }
-
-    /* 输入框数字超大放大 */
+    /* 输入框数字放大 */
     .stNumberInput input {
-        border-radius: 6px;
-        border: 2px solid #E0E0E0;
+        border-radius: 4px;
+        border: 1px solid #CBD5E0;
         background-color: #FFFFFF;
-        color: #000000;
+        color: #333333;
         transition: all 0.3s ease;
-        font-size: 30px !important;
-        font-weight: 800 !important;
-        padding: 5px 8px !important;
-        height: 100px !important;
-        width: 100% !important;
+        font-size: 16px !important;
+        padding: 10px 12px;
     }
 
     .stNumberInput input:focus {
-        border-color: #2E7D32;
-        box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.2);
+        border-color: #2F855A;
+        box-shadow: 0 0 0 3px rgba(47, 133, 90, 0.2);
         background-color: #FFFFFF;
     }
 
-    /* 输入框旁边的按钮放大 */
-    .stNumberInput button {
-        height: 100px !important;
-        width: 40px !important;
-        font-size: 20px !important;
-    }
-
-    /* 状态指示器旁边的文本（✓/✗）超大放大 */
+    /* 状态指示器旁边的文本（✓/✗）放大 */
     .status-indicator + span {
-        font-size: 30px !important;
-        font-weight: bold !important;
-        margin-left: 12px;
+        font-size: 20px !important;
+        margin-left: 8px;
     }
 
-    /* 状态指示器放大 */
-    .status-indicator {
-        display: inline-block;
-        width: 20px !important;
-        height: 20px !important;
-        border-radius: 50%;
-        margin-left: 10px;
-    }
-
-    .status-in-range {
-        background-color: #2E7D32;
-        box-shadow: 0 0 10px #2E7D32;
-    }
-
-    .status-out-of-range {
-        background-color: #D32F2F;
-        box-shadow: 0 0 10px #D32F2F;
-    }
-
-    /* 按钮样式 - 白色主题，放大 */
+    /* 按钮样式 - 白色主题 */
     .stButton > button {
-        background-color: #2E7D32;
+        background-color: #2F855A;
         color: white;
-        border: 1px solid #2E7D32;
-        font-weight: 800;
+        border: none;
+        font-weight: 500;
         transition: all 0.3s ease;
-        font-size: 30px !important;
-        padding: 0.5rem 0.5rem !important;
-        height: 80px !important;
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
     }
 
     .stButton > button:hover {
-        background-color: #1B5E20;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        background-color: #38A169;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(47, 133, 90, 0.3);
+    }
+
+    /* 状态指示器样式 - 白色主题 */
+    .status-indicator {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        margin-left: 8px;
+    }
+
+    .status-in-range {
+        background-color: #2F855A;
+        box-shadow: 0 0 4px #2F855A;
+    }
+
+    .status-out-of-range {
+        background-color: #E53E3E;
+        box-shadow: 0 0 4px #E53E3E;
     }
 
     /* 紧凑布局调整 */
@@ -354,15 +305,15 @@ st.markdown("""
         color: #333333;
     }
 
-    /* 指标卡片默认颜色 */
+    /* 指标卡片文字颜色 */
     [data-testid="stMetricValue"] {
-        color: #000000;
-        font-size: 30px !important;
+        color: #2F855A;
+        font-size: 1.2rem;
     }
 
     [data-testid="stMetricLabel"] {
-        color: #000000;
-        font-size: 30px !important;
+        color: #718096;
+        font-size: 0.9rem;
     }
 
     /* 数据表格样式 - 白色主题 */
@@ -373,70 +324,65 @@ st.markdown("""
     .stDataFrame [data-testid="StyledDataFrameDataCell"] {
         background-color: #FFFFFF;
         color: #333333;
-        font-size: 30px !important;
+        font-size: 0.9rem;
     }
 
     /* 展开器样式 - 白色主题 */
     .streamlit-expanderHeader {
         background-color: #F8F9FA;
         color: #333333;
-        border: 1px solid #E0E0E0;
-        font-size: 30px !important;
+        border: 1px solid #E2E8F0;
+        font-size: 1rem;
     }
 
     .streamlit-expanderContent {
-        background-color: #F8F9FA;
+        background-color: #FFFFFF;
         color: #333333;
-        border: 1px solid #E0E0E0;
+        border: 1px solid #E2E8F0;
     }
 
-    /* 警告框样式 - 白色主题，放大 */
+    /* 警告框样式 - 白色主题 */
     .stAlert {
-        background-color: #FFEBEE;
-        color: #D32F2F;
-        border: 1px solid #FFCDD2;
-        font-size: 30px !important;
-        padding: 5px !important;
+        background-color: #FFF5F5;
+        color: #E53E3E;
+        border: 1px solid #E53E3E;
+        font-size: 0.9rem;
     }
 
-    /* 成功消息样式 - 白色主题，放大 */
+    /* 成功消息样式 - 白色主题 */
     .stSuccess {
         background-color: #E8F5E9;
-        color: #2E7D32;
-        border: 5px solid #C8E6C9;
-        font-size: 30px !important;
-        padding: 5px !important;
+        color: #2F855A;
+        border: 1px solid #2F855A;
     }
 
     /* 信息框样式 - 白色主题 */
     .stInfo {
-        background-color: #E3F2FD;
-        color: #1976D2;
-        border: 1px solid #BBDEFB;
+        background-color: #EBF8FF;
+        color: #3182CE;
+        border: 1px solid #3182CE;
     }
 
     /* 下载按钮样式 */
     .stDownloadButton > button {
-        background-color: #F5F5F5;
-        color: #333333;
-        border: 1px solid #2E7D32;
-        font-size: 30px !important;
-        padding: 0.5rem 1rem !important;
+        background-color: #F8F9FA;
+        color: #2F855A;
+        border: 1px solid #2F855A;
     }
 
     .stDownloadButton > button:hover {
-        background-color: #E0E0E0;
-        border-color: #2E7D32;
+        background-color: #E8F5E9;
+        border-color: #2F855A;
     }
 
     /* 页脚样式 */
     footer {
-        color: #666666;
+        color: #718096;
     }
 
     /* 进度条样式 */
     .stProgress > div > div > div > div {
-        background-color: #2E7D32;
+        background-color: #2F855A;
     }
 
     /* 欢迎信息文字颜色 */
@@ -445,65 +391,15 @@ st.markdown("""
         font-size: 1.5rem;
     }
     .welcome-text p {
-        color: #666666 !important;
-        font-size: 1.5rem;
+        color: #718096 !important;
+        font-size: 1rem;
     }
 
     /* 分隔线样式调整（参数之间的细线） */
     hr {
-        margin-top: 20px !important;
-        margin-bottom: 20px !important;
-        border-color: #E0E0E0 !important;
-        border-width: 2px !important;
-    }
-
-    /* 文本区域样式 */
-    .stTextArea textarea {
-        background-color: #FFFFFF;
-        color: #333333;
-        border: 1px solid #E0E0E0;
-        font-size: 30px !important;
-    }
-
-    /* 选择框样式 */
-    .stSelectbox div[data-baseweb="select"] {
-        background-color: #FFFFFF;
-        border-color: #E0E0E0;
-        font-size: 30px !important;
-    }
-
-    /* 滑块样式 */
-    .stSlider div[data-baseweb="slider"] {
-        background-color: #FFFFFF;
-    }
-
-    /* 标签页样式 */
-    .stTabs [data-baseweb="tab-list"] {
-        background-color: #F8F9FA;
-    }
-
-    .stTabs [data-baseweb="tab"] {
-        color: #666666;
-        font-size: 30px !important;
-    }
-
-    .stTabs [aria-selected="true"] {
-        color: #2E7D32 !important;
-    }
-
-    /* 输入框容器内的标签隐藏 */
-    .stNumberInput label {
-        display: none !important;
-    }
-
-    /* 确保输入框占据整个宽度 */
-    div[data-testid="column"] .stNumberInput {
-        width: 100% !important;
-    }
-
-    /* 输入框和状态指示器的容器布局优化 */
-    div.row-widget.stHorizontal {
-        align-items: center !important;
+        margin-top: 15px !important;
+        margin-bottom: 15px !important;
+        border-color: #E2E8F0 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -511,9 +407,11 @@ st.markdown("""
 # 应用标题
 st.markdown('<div class="main-header">Digital Assembly Simulator</div>', unsafe_allow_html=True)
 
-# 检查图片文件是否存在 - 自适应全宽
+# 检查图片文件是否存在
 if os.path.exists("Stand.png"):
-    st.image("Stand.png", use_column_width=True)
+    col1, col2, col3 = st.columns([1, 4, 1])
+    with col2:
+        st.image("Stand.png", caption="Assembly Diagram", width=1000)
 else:
     st.info("📷 Assembly diagram image (Stand.png) not found")
 
@@ -707,22 +605,20 @@ else:
     # 获取特征顺序
     selected_features = st.session_state.selected_features
 
-    # 创建两列布局用于参数输入（6行2列）
-    col1, col2 = st.columns(2)
+    # 创建三列布局用于参数输入
+    col1, col2, col3 = st.columns(3)
 
     # 存储所有输入值的字典
     all_input_values = {}
     input_status = {}
 
-    # 第1列: 特征1,3,5,7,9,11 (奇数索引)
+    # 第1列: 特征1-4
     with col1:
         st.markdown('<div class="input-group">', unsafe_allow_html=True)
 
-        # 奇数索引：0,2,4,6,8,10
-        odd_indices = [0, 2, 4, 6, 8, 10]
-        for i, idx in enumerate(odd_indices):
-            if idx < len(selected_features):
-                feature = selected_features[idx]
+        for i in range(4):
+            if i < len(selected_features):
+                feature = selected_features[i]
                 display_name = feature_mapping.get(feature, feature)
                 min_val, max_val = given_ranges.get(feature, [0, 1])
                 default_val = (min_val + max_val) / 2
@@ -783,37 +679,31 @@ else:
                         icon="⚠️")
 
                 # 参数之间的分隔线（除了最后一个参数）
-                if i < len(odd_indices) - 1:
+                if i < 3:
                     st.markdown("---")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # 第2列: 特征2,4,6,8,10,12 (偶数索引)
+    # 第2列: 特征5-8
     with col2:
         st.markdown('<div class="input-group">', unsafe_allow_html=True)
 
-        # 偶数索引：1,3,5,7,9,11
-        even_indices = [1, 3, 5, 7, 9, 11]
-        for i, idx in enumerate(even_indices):
-            if idx < len(selected_features):
-                feature = selected_features[idx]
+        for i in range(4, 8):
+            if i < len(selected_features):
+                feature = selected_features[i]
                 display_name = feature_mapping.get(feature, feature)
                 min_val, max_val = given_ranges.get(feature, [0, 1])
                 default_val = (min_val + max_val) / 2
 
-                # 获取之前存储的值（如果有）
                 previous_value = st.session_state.input_values.get(feature, default_val)
 
-                # 创建带标签和范围显示的输入行
                 st.markdown(f'<div class="param-label">{display_name}</div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="range-display">Range: {min_val:.2f} - {max_val:.2f} mm</div>',
                             unsafe_allow_html=True)
 
-                # 创建两列布局：输入框和状态指示器
                 input_col, status_col = st.columns([4, 1])
 
                 with input_col:
-                    # 数字输入框
                     input_value = st.number_input(
                         "",
                         min_value=None,
@@ -826,15 +716,11 @@ else:
                     )
 
                 with status_col:
-                    # 检查输入值是否在范围内并显示状态
                     is_in_range = min_val <= input_value <= max_val
                     status_class = "status-in-range" if is_in_range else "status-out-of-range"
                     status_text = "✓" if is_in_range else "✗"
-
-                    # 存储状态
                     input_status[feature] = is_in_range
 
-                    # 根据状态显示不同的颜色
                     if is_in_range:
                         st.markdown(f'<div class="status-indicator {status_class}" title="Within range"></div>',
                                     unsafe_allow_html=True)
@@ -842,22 +728,78 @@ else:
                         st.markdown(f'<div class="status-indicator {status_class}" title="Out of range"></div>',
                                     unsafe_allow_html=True)
 
-                    # 在tooltip中显示状态
                     st.markdown(
                         f'<span title="{"Within range" if is_in_range else "Out of range"}">{status_text}</span>',
                         unsafe_allow_html=True)
 
-                # 存储输入值
                 all_input_values[feature] = input_value
 
-                # 如果值不在范围内，显示警告
                 if not is_in_range:
                     st.warning(
                         f"⚠️ Value ({input_value:.2f}) is outside the recommended range ({min_val:.2f}-{max_val:.2f})",
                         icon="⚠️")
 
-                # 参数之间的分隔线（除了最后一个参数）
-                if i < len(even_indices) - 1:
+                if i < 7:
+                    st.markdown("---")
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # 第3列: 特征9-12
+    with col3:
+        st.markdown('<div class="input-group">', unsafe_allow_html=True)
+
+        for i in range(8, 12):
+            if i < len(selected_features):
+                feature = selected_features[i]
+                display_name = feature_mapping.get(feature, feature)
+                min_val, max_val = given_ranges.get(feature, [0, 1])
+                default_val = (min_val + max_val) / 2
+
+                previous_value = st.session_state.input_values.get(feature, default_val)
+
+                st.markdown(f'<div class="param-label">{display_name}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="range-display">Range: {min_val:.2f} - {max_val:.2f} mm</div>',
+                            unsafe_allow_html=True)
+
+                input_col, status_col = st.columns([4, 1])
+
+                with input_col:
+                    input_value = st.number_input(
+                        "",
+                        min_value=None,
+                        max_value=None,
+                        value=float(previous_value),
+                        step=0.001,
+                        format="%.2f",
+                        key=f"input_{feature}",
+                        label_visibility="collapsed"
+                    )
+
+                with status_col:
+                    is_in_range = min_val <= input_value <= max_val
+                    status_class = "status-in-range" if is_in_range else "status-out-of-range"
+                    status_text = "✓" if is_in_range else "✗"
+                    input_status[feature] = is_in_range
+
+                    if is_in_range:
+                        st.markdown(f'<div class="status-indicator {status_class}" title="Within range"></div>',
+                                    unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<div class="status-indicator {status_class}" title="Out of range"></div>',
+                                    unsafe_allow_html=True)
+
+                    st.markdown(
+                        f'<span title="{"Within range" if is_in_range else "Out of range"}">{status_text}</span>',
+                        unsafe_allow_html=True)
+
+                all_input_values[feature] = input_value
+
+                if not is_in_range:
+                    st.warning(
+                        f"⚠️ Value ({input_value:.2f}) is outside the recommended range ({min_val:.2f}-{max_val:.2f})",
+                        icon="⚠️")
+
+                if i < 11:
                     st.markdown("---")
 
         st.markdown('</div>', unsafe_allow_html=True)
@@ -923,28 +865,147 @@ if submitted and st.session_state.get('model_loaded', False):
         # 显示成功消息
         st.success(f"✅ Simulation #{st.session_state.simulation_count} completed!")
 
-        # 显示结果 - 仅显示扭矩值和通过与否
+        # 显示结果
         st.markdown('<div class="section-header">📊 Simulation Results</div>', unsafe_allow_html=True)
 
-        # 结果卡片（单列，只包含扭矩和判断）
-        st.markdown('<div class="result-card">', unsafe_allow_html=True)
+        # 创建两列布局
+        result_col1, result_col2 = st.columns([1, 1])
 
-        # 使用两列显示两个扭矩值
-        col_metric1, col_metric2 = st.columns(2)
-        with col_metric1:
-            st.metric(
-                label="**Torque (N·m)**",
-                value=f"{nm_result:.2f}"
+        with result_col1:
+            # 结果卡片
+            st.markdown('<div class="result-card">', unsafe_allow_html=True)
+
+            col_metric1, col_metric2 = st.columns(2)
+            with col_metric1:
+                st.metric(
+                    label="**Torque**",
+                    value=f"{nm_result:.2f} N·m"
+                )
+            with col_metric2:
+                st.metric(
+                    label="**Torque**",
+                    value=f"{torque_prediction:.2f} kg·cm"
+                )
+
+            st.markdown(f"**Judgment:** <span class='{result_style}'>{judge}</span>", unsafe_allow_html=True)
+
+            # 进度条
+            if nm_result >= 2.35 and nm_result <= 2.75:
+                progress_value = (nm_result - 2.35) / (2.75 - 2.35)
+            elif nm_result < 2.35:
+                progress_value = 0
+            else:
+                progress_value = 1
+
+            st.progress(progress_value)
+            st.caption(f"Specification: 2.35 - 2.75 N·m (24 - 28 kg·cm)")
+
+            # 输入参数状态总结
+            st.markdown("**Parameter Status:**")
+            in_range_count = sum(1 for status in st.session_state.input_status.values() if status)
+            total_count = len(st.session_state.input_status)
+
+            col_stat1, col_stat2 = st.columns(2)
+            with col_stat1:
+                st.metric("In Range", f"{in_range_count}/{total_count}")
+            with col_stat2:
+                st.metric("Out of Range", f"{total_count - in_range_count}/{total_count}")
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            # 参数表格
+            st.markdown("**Used Parameters:**")
+            param_data = []
+            for feature in st.session_state.selected_features:
+                display_name = feature_mapping.get(feature, feature)
+                if len(display_name) > 30:
+                    short_name = display_name[:27] + "..."
+                else:
+                    short_name = display_name
+
+                is_in_range = st.session_state.input_status.get(feature, True)
+                status_icon = "✅" if is_in_range else "⚠️"
+
+                param_data.append({
+                    "Parameter": short_name,
+                    "Value": f"{st.session_state.input_values[feature]:.2f} mm",
+                    "Status": status_icon
+                })
+
+            param_df = pd.DataFrame(param_data)
+            st.dataframe(param_df, hide_index=True, use_container_width=True, height=300)
+
+        with result_col2:
+            # 使用白色背景样式绘制图表
+            plt.style.use('default')
+            fig, ax = plt.subplots(figsize=(7, 4.5))
+
+            fig.patch.set_facecolor('#FFFFFF')
+            ax.set_facecolor('#F8F9FA')
+
+            x_pos = [0]
+            ax.bar(x_pos, [nm_result], color='#2F855A', width=0.5, label='Simulated Torque', alpha=0.8)
+
+            ax.axhline(y=2.35, color='#E53E3E', linestyle='--', linewidth=1.5, alpha=0.7, label='Min Limit')
+            ax.axhline(y=2.75, color='#E53E3E', linestyle='--', linewidth=1.5, alpha=0.7, label='Max Limit')
+
+            ax.axhspan(2.35, 2.75, alpha=0.2, color='#2F855A', label='Acceptable Range')
+
+            ax.set_ylabel('Torque (N·m)', fontsize=11, color='#333333')
+            ax.set_title('Torque Result Visualization', fontsize=12, fontweight='bold', pad=10, color='#333333')
+            ax.set_xticks([])
+            ax.grid(True, alpha=0.3, linestyle='--', axis='y', color='#CBD5E0')
+            ax.legend(loc='upper right', fontsize=9, facecolor='#FFFFFF', edgecolor='#E2E8F0', labelcolor='#333333')
+
+            ax.text(0, nm_result + 0.02, f'{nm_result:.2f} N·m',
+                    ha='center', va='bottom', fontweight='bold', fontsize=10, color='#333333')
+
+            ax.text(0.5, -0.1, f'Equivalent to {torque_prediction:.2f} kg·cm',
+                    ha='center', va='top', fontsize=9, transform=ax.transAxes, color='#718096')
+
+            ax.tick_params(colors='#333333')
+            for spine in ax.spines.values():
+                spine.set_color('#E2E8F0')
+
+            plt.tight_layout()
+            st.pyplot(fig, use_container_width=True)
+
+        # 下载按钮
+        st.markdown("---")
+        output = {
+            "simulation_data": {
+                "simulation_id": st.session_state.simulation_count,
+                "timestamp": result_data["timestamp"],
+                "calculation_method": "Linear Regression Model",
+                "unit_conversion": "1 kg·cm = 0.098 N·m"
+            },
+            "input_parameters": result_data["parameters"],
+            "parameter_status": result_data["parameters_status"],
+            "results": {
+                "torque_kg_cm": float(torque_prediction),
+                "calculated_torque_Nm": float(nm_result),
+                "judgment": judge,
+                "specification_compliance": {
+                    "min_limit_Nm": 2.35,
+                    "max_limit_Nm": 2.75,
+                    "min_limit_kg_cm": 24,
+                    "max_limit_kg_cm": 28,
+                    "within_spec": judge == "Pass"
+                }
+            }
+        }
+
+        json_str = json.dumps(output, ensure_ascii=False, indent=2)
+
+        col_dl1, col_dl2, col_dl3 = st.columns([1, 2, 1])
+        with col_dl2:
+            st.download_button(
+                label="📥 Download Results as JSON",
+                data=json_str,
+                file_name=f"simulation_result_{st.session_state.simulation_count}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json",
+                use_container_width=True
             )
-        with col_metric2:
-            st.metric(
-                label="**Torque (kg·cm)**",
-                value=f"{torque_prediction:.2f}"
-            )
-
-        st.markdown(f"**Judgment:** <span class='{result_style}'>{judge}</span>", unsafe_allow_html=True)
-
-        st.markdown('</div>', unsafe_allow_html=True)
 
 # 如果还没有运行过模拟，显示欢迎信息
 if not submitted or not st.session_state.get('model_loaded', False):
@@ -953,7 +1014,7 @@ if not submitted or not st.session_state.get('model_loaded', False):
         st.markdown("""
         <div class="welcome-text" style='text-align: center; padding: 20px;'>
             <h3 style='color: #333333;'>Welcome to Digital Assembly Simulator</h3>
-            <p style='color: #666666;'>Simulate and analyze assembly parameters for optimal performance.</p>
+            <p style='color: #718096;'>Simulate and analyze assembly parameters for optimal performance.</p>
         </div>
         """, unsafe_allow_html=True)
 
